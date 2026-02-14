@@ -1,9 +1,6 @@
-import type { Metadata } from 'next'
-import './globals.css'
-
-export const metadata: Metadata = {
-  title: 'SMT Trading Journal - Ultimate Edition',
-  description: 'Professional SMT trading journal with advanced analytics',
+export const metadata = {
+  title: 'SMT Trading Journal',
+  description: 'Trading journal',
 }
 
 export default function RootLayout({
@@ -13,7 +10,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body style={{ margin: 0, background: '#0a0e27', color: '#ffffff' }}>
+        {children}
+      </body>
     </html>
   )
 }
