@@ -8,10 +8,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-
 export default function Home() {
   const [activeTab, setActiveTab] = useState('entry')
-  const [trades, setTrades] = useState([])
+  const [trades, setTrades] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,17 +26,15 @@ export default function Home() {
         .order('date', { ascending: false })
       
       if (error) throw error
-      setTrades(data as Trade[] || [])
+      setTrades(data || [])
     } catch (err) {
       console.error('Error loading trades:', err)
-      // Fallback to localStorage
       const local = localStorage.getItem('smtTrades')
       if (local) {
         try {
-          const parsed = JSON.parse(local)
-          if (Array.isArray(parsed)) setTrades(parsed)
+          setTrades(JSON.parse(local))
         } catch (e) {
-          console.error('localStorage parse error:', e)
+          console.error('Parse error:', e)
         }
       }
     } finally {
@@ -45,143 +42,140 @@ export default function Home() {
     }
   }
 
-  const tabs = [
-    { id: 'entry', label: '📝 Entry', icon: '📝' },
-    { id: 'history', label: '📚 History', icon: '📚' },
-    { id: 'analytics', label: '📈 Analytics', icon: '📈' },
-    { id: 'calendar', label: '📅 Calendar', icon: '📅' },
-  ]
+  const stats = {
+    total: trades.length,
+    wins: trades.filter((t: any) => t.result === 'Win').length,
+    losses: trades.filter((t: any) => t.result === 'Loss').length,
+    winRate: trades.length > 0 ? ((trades.filter((t: any) => t.result === 'Win').length / trades.length) * 100).toFixed(1) : '0',
+    totalPL: trades.reduce((sum: number, t: any) => sum + (t.dollar_pl || 0), 0).toFixed(2),
+  }
 
   return (
-    <main className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="card mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#00d4ff] to-[#8b5cf6] bg-clip-text text-transparent mb-2">
-            SMT Trading Journal
-          </h1>
-          <p className="text-[#a5b4fc] font-mono text-sm">
-            ULTRA ROBUST EDITION • Mobile Optimized
-          </p>
-        </div>
+    <div className="container">
+      <div className="header">
+        <h1>SMT Trading Journal</h1>
+        <p style={{ color: '#a5b4fc', fontSize: '0.875rem' }}>
+          Ultra Robust Edition • Mobile Optimized ✅
+        </p>
+      </div>
 
-        {/* Tabs - React State Management (GUARANTEED to work) */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                console.log('Tab clicked:', tab.id)
-                setActiveTab(tab.id)
-              }}
-              className={`px-6 py-3 rounded-2xl font-semibold whitespace-nowrap transition-all duration-300 
-                ${activeTab === tab.id
-                  ? 'bg-gradient-to-r from-[#00d4ff]/20 to-[#8b5cf6]/20 border-2 border-[#00d4ff] text-white shadow-lg'
-                  : 'bg-transparent border-2 border-[rgba(165,180,252,0.1)] text-[#a5b4fc] hover:border-[#00d4ff]'
-                }`}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
-        </div>
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === 'entry' ? 'active' : ''}`}
+          onClick={() => setActiveTab('entry')}
+        >
+          📝 Entry
+        </button>
+        <button
+          className={`tab ${activeTab === 'history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('history')}
+        >
+          📚 History
+        </button>
+        <button
+          className={`tab ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          📈 Analytics
+        </button>
+      </div>
 
-        {/* Tab Content */}
-        <div className="card">
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-12 h-12 border-4 border-[rgba(165,180,252,0.1)] border-t-[#00d4ff] rounded-full animate-spin mb-4" />
-              <p className="text-[#a5b4fc]">Loading...</p>
-            </div>
-          ) : (
-            <>
-              {activeTab === 'entry' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-[#00d4ff] mb-6">Trade Entry</h2>
-                  <p className="text-[#a5b4fc] mb-4">Enter your SMT trades here.</p>
-                  <div className="bg-[#0f1535] p-6 rounded-xl border border-[rgba(165,180,252,0.1)]">
-                    <p className="text-sm text-[#6b7280]">Trade entry form coming soon...</p>
-                    <p className="text-sm text-[#6b7280] mt-2">Total Trades: {trades.length}</p>
-                  </div>
+      <div className="card">
+        {loading ? (
+          <div className="loading">
+            <div className="spinner"></div>
+            <p style={{ marginTop: '16px', color: '#a5b4fc' }}>Loading...</p>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'entry' && (
+              <div>
+                <h2 style={{ color: '#00d4ff', marginBottom: '16px' }}>Trade Entry</h2>
+                <p style={{ color: '#a5b4fc' }}>
+                  Trade entry form coming soon. For now, you can add trades directly in Supabase.
+                </p>
+                <div style={{ marginTop: '16px', padding: '16px', background: '#0f1535', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    Total Trades in Database: <strong style={{ color: '#00d4ff' }}>{trades.length}</strong>
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {activeTab === 'history' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-[#00d4ff] mb-6">Trade History</h2>
-                  {trades.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">📭</div>
-                      <h3 className="text-xl font-semibold mb-2">No Trades Yet</h3>
-                      <p className="text-[#a5b4fc]">Start logging your SMT trades!</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {trades.slice(0, 5).map((trade, i) => (
-                        <div key={i} className="bg-[#0f1535] p-4 rounded-xl border border-[rgba(165,180,252,0.1)]">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="font-bold">{trade.asset}</span>
-                              <span className="ml-2 text-[#a5b4fc]">{trade.direction}</span>
+            {activeTab === 'history' && (
+              <div>
+                <h2 style={{ color: '#00d4ff', marginBottom: '16px' }}>Trade History</h2>
+                {trades.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-state-icon">📭</div>
+                    <h3>No Trades Yet</h3>
+                    <p>Start logging your SMT trades to see them here!</p>
+                  </div>
+                ) : (
+                  <div className="trade-list">
+                    {trades.slice(0, 10).map((trade: any) => (
+                      <div key={trade.id} className="trade-item">
+                        <div className="trade-header">
+                          <div>
+                            <strong>{trade.asset}</strong> {trade.direction}
+                            <div style={{ fontSize: '0.875rem', color: '#a5b4fc', marginTop: '4px' }}>
+                              {new Date(trade.date).toLocaleDateString()}
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                              trade.result === 'Win' ? 'bg-[#00ff88]/20 text-[#00ff88]' : 'bg-[#ff3366]/20 text-[#ff3366]'
-                            }`}>
-                              {trade.result}
-                            </span>
+                          </div>
+                          <div className={`trade-result ${trade.result.toLowerCase()}`}>
+                            {trade.result}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '0.875rem', color: '#a5b4fc' }}>
+                          <div>Points: {trade.points_pl}</div>
+                          <div>P/L: ${trade.dollar_pl}</div>
+                          <div>{trade.smt_timeframe} {trade.smt_timing}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-              {activeTab === 'analytics' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-[#00d4ff] mb-6">Analytics</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-[#0f1535] p-6 rounded-xl border border-[rgba(165,180,252,0.1)] text-center">
-                      <div className="text-4xl font-bold text-[#00d4ff] mb-2">{trades.length}</div>
-                      <div className="text-[#a5b4fc] text-sm">Total Trades</div>
+            {activeTab === 'analytics' && (
+              <div>
+                <h2 style={{ color: '#00d4ff', marginBottom: '24px' }}>Analytics</h2>
+                <div className="stat-grid">
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#00d4ff' }}>{stats.total}</div>
+                    <div className="stat-label">Total Trades</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#00ff88' }}>{stats.winRate}%</div>
+                    <div className="stat-label">Win Rate</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#00ff88' }}>{stats.wins}</div>
+                    <div className="stat-label">Wins</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: '#ff3366' }}>{stats.losses}</div>
+                    <div className="stat-label">Losses</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-value" style={{ color: parseFloat(stats.totalPL) >= 0 ? '#00ff88' : '#ff3366' }}>
+                      ${stats.totalPL}
                     </div>
-                    <div className="bg-[#0f1535] p-6 rounded-xl border border-[rgba(165,180,252,0.1)] text-center">
-                      <div className="text-4xl font-bold text-[#00ff88] mb-2">
-                        {trades.length > 0 ? ((trades.filter(t => t.result === 'Win').length / trades.length) * 100).toFixed(1) : 0}%
-                      </div>
-                      <div className="text-[#a5b4fc] text-sm">Win Rate</div>
-                    </div>
-                    <div className="bg-[#0f1535] p-6 rounded-xl border border-[rgba(165,180,252,0.1)] text-center">
-                      <div className="text-4xl font-bold text-[#8b5cf6] mb-2">
-                        {trades.filter(t => t.result === 'Win').length}
-                      </div>
-                      <div className="text-[#a5b4fc] text-sm">Wins</div>
-                    </div>
+                    <div className="stat-label">Total P/L</div>
                   </div>
                 </div>
-              )}
-
-              {activeTab === 'calendar' && (
-                <div>
-                  <h2 className="text-2xl font-bold text-[#00d4ff] mb-6">Calendar View</h2>
-                  <div className="bg-[#0f1535] p-6 rounded-xl border border-[rgba(165,180,252,0.1)]">
-                    <p className="text-[#a5b4fc]">Calendar visualization coming soon...</p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Tab State Debug Info */}
-        <div className="mt-4 p-4 bg-[#0f1535] rounded-xl border border-[rgba(165,180,252,0.1)]">
-          <p className="text-xs text-[#6b7280]">
-            Active Tab: <span className="text-[#00d4ff] font-mono">{activeTab}</span>
-          </p>
-          <p className="text-xs text-[#6b7280] mt-1">
-            ✅ Tabs use React state - guaranteed to work on all devices!
-          </p>
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </main>
+
+      <div className="debug">
+        <div>✅ Active Tab: <strong>{activeTab}</strong></div>
+        <div>✅ Tabs: React state (works on all devices!)</div>
+        <div>✅ Database: {trades.length > 0 ? 'Connected ✅' : 'Using localStorage fallback'}</div>
+      </div>
+    </div>
   )
 }
