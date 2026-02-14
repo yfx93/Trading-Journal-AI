@@ -7,11 +7,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
-import type { Trade } from '@/types/trade'
+
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('entry')
-  const [trades, setTrades] = useState<Trade[]>([])
+  const [trades, setTrades] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
